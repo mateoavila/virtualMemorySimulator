@@ -15,20 +15,28 @@ public class TLBEntry {
 		this.pageFrameNum = pageFrameNum;
 	}
 	
-	public int getVPageNum() {
-		return VPageNum;
+	public int getVBit() {
+		return vBit;
 	}
 	
-	public int getVbit() {
-		return vBit;
+	public void setVBit(int newVBit) {
+		vBit = newVBit;
 	}
 	
 	public int getRBit() {
 		return rBit;
 	}
 	
+	public void setRBit(int newRBit) {
+		vBit = newRBit;
+	}
+	
 	public int getDBit() {
 		return dBit;
+	}
+	
+	public void setDBit(int newDBit) {
+		vBit = newDBit;
 	}
 	
 	public int getPageFrameNum() {
