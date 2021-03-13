@@ -1,12 +1,12 @@
 package virtualMemorySimulator;
 
-public class PageTableEntries {
+public class PageTableEntry {
 	private int vBit;
 	private int rBit;
 	private int dBit;
 	private int pageFrameNum;
 	
-	public PageTableEntries(int vBit, int rBit, int dBit, int pageFrameNum) {
+	public PageTableEntry(int vBit, int rBit, int dBit, int pageFrameNum) {
 		this.vBit = vBit;
 		this.rBit = rBit;
 		this.dBit = dBit;
