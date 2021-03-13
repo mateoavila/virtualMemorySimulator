@@ -13,16 +13,28 @@ public class PageTableEntry {
 		this.pageFrameNum = pageFrameNum;
 	}
 	
-	public int getVbit() {
+	public int getVBit() {
 		return vBit;
+	}
+	
+	public void setVBit(int newVBit) {
+		vBit = newVBit;
 	}
 	
 	public int getRBit() {
 		return rBit;
 	}
 	
+	public void setRBit(int newRBit) {
+		vBit = newRBit;
+	}
+	
 	public int getDBit() {
 		return dBit;
+	}
+	
+	public void setDBit(int newDBit) {
+		vBit = newDBit;
 	}
 	
 	public int getPageFrameNum() {
