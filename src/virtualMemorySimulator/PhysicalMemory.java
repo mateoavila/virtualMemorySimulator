@@ -6,13 +6,13 @@ import java.util.Scanner;
 
 public class PhysicalMemory {
 
-	private int[][] ram;
-	
+	public static int[][] ram= new int[16][256];
+	/*
 	public PhysicalMemory() {
-		ram = new int[16][256];
+		ram = ;
 	}
-	
-	public void store(int index, String sourcePath) throws FileNotFoundException {
+	*/
+	public static void store(int index, String sourcePath) throws FileNotFoundException {
 		File f = new File(sourcePath);
 		Scanner sc = new Scanner(f);
 		int col = 0;
@@ -23,15 +23,15 @@ public class PhysicalMemory {
 		sc.close();
 	}
 	
-	public int read(int row, int col) {
+	public static int read(int row, int col) {
 		return ram[row][col];
 	}
 	
-	public void write(int row, int col, int val) { 
+	public static void write(int row, int col, int val) { 
 		ram[row][col] = val;
 	}
 	
-	public int[] getPage(int row) {
+	public static int[] getPage(int row) {
 		return ram[row];
 	}
 }
