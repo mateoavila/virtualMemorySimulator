@@ -7,7 +7,7 @@ public class VirtualPageTable {
 	public VirtualPageTable() {
 		this.pageTable = new PageTableEntry[256];
 	}
-
+	
 	public void store(PageTableEntry newEntry, int index) {
 		// stored in CPU or MMU
 		// do calculation to find the page table size
