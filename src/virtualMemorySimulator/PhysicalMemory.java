@@ -1,6 +1,6 @@
 package virtualMemorySimulator;
 
-public class PhycicalMemory {
+public class PhysicalMemory {
 
 	public static void search() {
 		
