@@ -1,6 +1,8 @@
 package virtualMemorySimulator;
 
 public class VirtualPageTable {
+	
+	private PageTableEntries[] pageTable = new PageTableEntries[256];
 
 	public static void store() {
 		// stored in CPU or MMU
@@ -9,8 +11,8 @@ public class VirtualPageTable {
 		
 		// 1D array of VPTEntries  with size ^
 		
-
-		
 	}
+	
+	
 
 }
