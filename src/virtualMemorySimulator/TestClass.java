@@ -3,7 +3,9 @@ package virtualMemorySimulator;
 public class TestClass {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		// make copy of the pages 
+		
+	System.out.println("test to see is git is working");
 
 	}
 
