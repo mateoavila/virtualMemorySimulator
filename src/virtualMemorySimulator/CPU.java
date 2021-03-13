@@ -2,11 +2,7 @@ package virtualMemorySimulator;
 
 public class CPU {
 	
-	private TLBEntry[] TLBCache;
-	
-	public CPU() {
-		TLBCache = new TLBEntry[16];
-	}
+	public static TLBEntry[] TLBCache = new TLBEntry[16];
 	
 	
 	
