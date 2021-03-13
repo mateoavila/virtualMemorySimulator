@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 
 public class WriteCSV {
 
-	public static void saveTitle(String text) throws IOException {
+	public static void saveOutput(String text) throws IOException {
 		
 		File file1 = new File("Result.csv");
 		
