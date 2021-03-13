@@ -2,9 +2,15 @@ package virtualMemorySimulator;
 
 public class VirtualPageTable {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public static void store() {
+		// stored in CPU or MMU
+		
+		// do calculation to find the page table size
+		
+		// 1D array of VPTEntries  with size ^
+		
 
+		
 	}
 
 }

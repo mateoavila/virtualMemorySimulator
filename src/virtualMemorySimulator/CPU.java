@@ -2,11 +2,17 @@ package virtualMemorySimulator;
 
 public class CPU {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public static void read() {
+		// reads the test data with loop checking to see if it is a read or write and does 
 		
-		// test to see if pull works
-
+		// writes to the physical mem
+		
+		//MMU
+			// translates addresses
+			// finds page and line #
+			
+		//TLB
+			// 1D array of 16 entries of TLBEntry object
 	}
 
 }
