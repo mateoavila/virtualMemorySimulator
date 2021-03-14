@@ -2,28 +2,24 @@ package virtualMemorySimulator;
 
 public class VirtualPageTable {
 	
-	private PageTableEntry[] pageTable;
+	public static PageTableEntry[] pageTable = new PageTableEntry[256];
 	
-	public VirtualPageTable() {
-		this.pageTable = new PageTableEntry[256];
-	}
-	
-	public void store(PageTableEntry newEntry, int index) {
+	public static void store(PageTableEntry newEntry, int index) {
 		// stored in CPU or MMU
 		// do calculation to find the page table size
 		// 1D array of VPTEntries  with size ^
 		pageTable[index] = newEntry;
 	}
 	
-	public PageTableEntry[] getPageTable() {
+	public static PageTableEntry[] getPageTable() {
 		return pageTable;
 	}
 	
-	public PageTableEntry getEntry(int index) {
+	public static PageTableEntry getEntry(int index) {
 		return pageTable[index];
 	}
 	
-	public void changeEntry(String bit, int index, int newBit) {
+	public static void changeEntry(String bit, int index, int newBit) {
 		if (bit.equals("vBit")) {
 			pageTable[index].setVBit(newBit);
 		}

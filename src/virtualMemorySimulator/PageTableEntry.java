@@ -40,4 +40,8 @@ public class PageTableEntry {
 	public int getPageFrameNum() {
 		return pageFrameNum;
 	}
+	
+	public void setPageFrameNum(int newPageFrameNum) {
+		pageFrameNum = newPageFrameNum;
+	}
 }
