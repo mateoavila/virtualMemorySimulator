@@ -28,7 +28,7 @@ public class OperatingSystem {
 		
 		
 		String freshPage = "Project2_test_and_page_files/page_files_Copy/" + hexPageNum + ".pg";
-		int dirtyPageInt = Integer.parseInt(hexPageNum, 16);
+		int freshPageInt = Integer.parseInt(hexPageNum, 16);
 		int evictedPage = -1;
 	    int dirtySet = -1;
 		int [] replace = new int [3];
@@ -43,11 +43,15 @@ public class OperatingSystem {
 			
 			evictedPage = replace[1]; 
 			dirtySet = replace[2]; 
-			VirtualPageTable.getPageTable()[dirtyPageInt].setPageFrameNum(replace[0]);
+			VirtualPageTable.getPageTable()[freshPageInt].setPageFrameNum(replace[0]);
+			VirtualPageTable.getPageTable()[freshPageInt].setVBit(1);
+        	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);
 			
-            if (CPU.inTLB(dirtyPageInt) != -1) {
+            if (CPU.inTLB(freshPageInt) != -1) {
             	
-            	CPU.TLBCache[CPU.inTLB(dirtyPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
             	
             }
 			
@@ -56,11 +60,15 @@ public class OperatingSystem {
 		} else {
 			int index = PhysicalMemory.nextEmptySpotInRAM();
 			PhysicalMemory.store(index, freshPage);
-			VirtualPageTable.getPageTable()[dirtyPageInt].setPageFrameNum(index);
+			VirtualPageTable.getPageTable()[freshPageInt].setPageFrameNum(index);
+			VirtualPageTable.getPageTable()[freshPageInt].setVBit(1);
+        	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);
 			
-			if (CPU.inTLB(dirtyPageInt) != -1) {
+			if (CPU.inTLB(freshPageInt) != -1) {
             	
-            	CPU.TLBCache[CPU.inTLB(dirtyPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
             	
             }
 		}

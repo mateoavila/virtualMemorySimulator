@@ -34,7 +34,27 @@ public class CPU {
 	}
 	
 	
-	public static void read(String testFilePath) throws FileNotFoundException {
+	public static void fifo(){
+
+	       TLBEntry[] temp = new TLBEntry[16];
+	       
+	       for(int i = 0; i < (15); i++){
+	           temp[i] = TLBCache[i+1];
+	       }
+	       
+	       for(int i = 0; i < 16; i++){
+	           TLBCache[i]=temp[i];
+	       }
+	       
+	       TLBCache[15]= null;
+	       
+	   }
+	
+	public static void start(String testFilePath) throws FileNotFoundException {
+		for (int i = 0; i < 256; i++) {
+			VirtualPageTable.pageTable[i] = new PageTableEntry (0,0,0,-1);
+		}
+		
 		// reads the test data with loop checking to see if it is a read or write and does 
 		
 		File readFile = new File(testFilePath);
@@ -56,34 +76,35 @@ public class CPU {
 				//calculate page info and offset for line number
 				int pageNumber = (int) Math.floor( intAddress / 256 );
 				String pageNumberHex = Integer.toHexString (pageNumber);
-				int lineNumber = intAddress - (pageNumber * 256) ;
+				int lineNumber = intAddress - (pageNumber * 256);
 				
-				//if it is found in TLB
-				if (inTLB(pageNumber) > -1) {
-					int val = PhysicalMemory.read(inTLB(pageNumber), lineNumber);
+				//if it is found in TLB and it is marked as active
+				if (inTLB(pageNumber) > -1 && TLBCache[inTLB(pageNumber)].getVBit() == 1) {
+					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					VirtualPageTable.getEntry(pageNumber).setRBit(1);
 					TLBCache[inTLB(pageNumber)].setRBit(1);
 					//write val to CSV
 					//record as hit
 				}
 				//check if entry is in the page table next
-				else if (VirtualPageTable.getEntry(pageNumber) != null) {
+				else if (VirtualPageTable.getEntry(pageNumber).getVBit() == 1) {
 					//its not in TLB so it must be added there
 					if ( nextEmptySpotInTLB() > -1 ) {
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
-						addTLBEntry(index, pageNumber, 1, 1, 0, index);
-						PhysicalMemory.store(index, "Project2_test_and_page_files/page_files_Copy/" + pageNumberHex + ".pg");
+						addTLBEntry(index, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
 						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
-						VirtualPageTable.getEntry(pageNumber).setPageFrameNum(index);
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
-						
+						fifo();
+						addTLBEntry(15, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 					}
 					
-					int val = PhysicalMemory.read(inTLB(pageNumber), lineNumber);
+					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					//write val to csv
 					//record as Soft miss in CSV
 				
@@ -94,18 +115,23 @@ public class CPU {
 
 					//its not in TLB so it must be added there
 					if ( nextEmptySpotInTLB() > -1 ) {
+						int[] evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
-						addTLBEntry(index, pageNumber, 1, 1, 0, index);
-						PhysicalMemory.store(index, "Project2_test_and_page_files/page_files_Copy/" + pageNumberHex + ".pg");
-						VirtualPageTable.store(new PageTableEntry(1, 1, 0, index), pageNumber);
+						addTLBEntry(index, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
-						
+						int[] evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
+						fifo();
+						addTLBEntry(15, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setRBit(1);
 					}
 					
-					int val = PhysicalMemory.read(inTLB(pageNumber), lineNumber);
+					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					//write val to csv
 					//record as hard miss in CSV
 				}
@@ -186,9 +212,9 @@ public class CPU {
 			
 			interruptCount++;
 
-			if (interruptCount == 10) {
+			if (interruptCount % 10 == 0) {
 				//call OS method to reset R bit of all entries in page table
-				
+				OperatingSystem.resetRBit();
 			}
 			
 		}
