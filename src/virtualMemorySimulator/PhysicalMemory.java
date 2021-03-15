@@ -7,6 +7,7 @@ import java.util.Scanner;
 public class PhysicalMemory {
 
 	public static int[][] ram= new int[16][256];
+	public static int counter = 0;
 	/*
 	public PhysicalMemory() {
 		ram = ;
@@ -21,6 +22,13 @@ public class PhysicalMemory {
 			col++;
 		}
 		sc.close();
+	}
+	
+	public static int nextEmptySpotInRAM () {
+			if ( counter >= 16 )
+				return -1;
+			
+			return counter;
 	}
 	
 	public static int read(int row, int col) {

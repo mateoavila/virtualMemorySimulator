@@ -43,6 +43,10 @@ public class TLBEntry {
 		dBit = newDBit;
 	}
 	
+	public void setPageFrameNum(int newPageFrameNum) {
+		pageFrameNum = newPageFrameNum;
+	}
+	
 	public int getPageFrameNum() {
 		return pageFrameNum;
 	}

@@ -26,46 +26,43 @@ public class OperatingSystem {
 	// writes the dirty page to memory and resets the Dirty bit
 	public static int[] writeDirtyPage(String hexPageNum) throws FileNotFoundException { 
 		
-		int [] pgFile = new int[256];
-		String dirtyPage = "Project2_test_and_page_files/page_files_Copy/" + hexPageNum + ".pg";
+		
+		String freshPage = "Project2_test_and_page_files/page_files_Copy/" + hexPageNum + ".pg";
 		int dirtyPageInt = Integer.parseInt(hexPageNum, 16);
-		Scanner sc = new Scanner(new File(dirtyPage));
 		int evictedPage = -1;
 	    int dirtySet = -1;
-		int [] replace = new int [2];
-		
-		//reads from page file and stores the content in an array
-		for (int i = 0; i < pgFile.length; i++) {
-			if(sc.hasNext()) {
-				pgFile[i] = sc.nextInt();
-			}
-		}
-		
-		sc.close();
-		
+		int [] replace = new int [3];
+			
 		
 		//if RAM is full replace page
-		if (PhysicalMemory.ram.length == 16) {
-			replace = pageReplacement(); 
+		if (PhysicalMemory.nextEmptySpotInRAM() == -1) {
+			replace = pageReplacement();
+			
+			//write new page to memory
+			PhysicalMemory.store(replace[0], freshPage);
+			
 			evictedPage = replace[1]; 
 			dirtySet = replace[2]; 
 			VirtualPageTable.getPageTable()[dirtyPageInt].setPageFrameNum(replace[0]);
-			VirtualPageTable.getPageTable()[dirtyPageInt].setDBit(dirtySet);
 			
-            
-            if(CPU.inTLB(dirtyPageInt) == 1) {
-            	//change this if not correct
-            	CPU.addTLBEntry(evictedPage, evictedPage, 1, 1, dirtySet, dirtyPageInt); 
+            if (CPU.inTLB(dirtyPageInt) != -1) {
+            	
+            	CPU.TLBCache[CPU.inTLB(dirtyPageInt)].setPageFrameNum(replace[0]);
+            	
             }
-        //if not full add to page table and TLB
-		}else {
-			//change this if not correct
-			CPU.addTLBEntry(evictedPage, evictedPage, 1, 1, dirtySet, dirtyPageInt);// should be empty index
 			
-			 if(CPU.inTLB(dirtyPageInt) == 1) {
-				//change this if not correct
-				 CPU.addTLBEntry(evictedPage, evictedPage, 1, 1, dirtySet, dirtyPageInt);
-	         }
+
+        //if not full add to page table and TLB
+		} else {
+			int index = PhysicalMemory.nextEmptySpotInRAM();
+			PhysicalMemory.store(index, freshPage);
+			VirtualPageTable.getPageTable()[dirtyPageInt].setPageFrameNum(index);
+			
+			if (CPU.inTLB(dirtyPageInt) != -1) {
+            	
+            	CPU.TLBCache[CPU.inTLB(dirtyPageInt)].setPageFrameNum(replace[0]);
+            	
+            }
 		}
 		
 		// see if this is what needs to be done
