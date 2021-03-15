@@ -1,62 +1,86 @@
 package virtualMemorySimulator;
 
+//import statements
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class CPU {
 	
+	//initialize TLB of size 16
 	public static TLBEntry[] TLBCache = new TLBEntry[16];
 	
-	
+	//method to add a new TLBEntry with all required values as parameters
 	public static void addTLBEntry (int index, int pageNumber, int vbit, int rbit, int dbit, int frameNumber) {
-		
+		//add a new entry at the specified index with desired values
 		TLBCache[index] = new TLBEntry(pageNumber, vbit, rbit, dbit, frameNumber);	
 	}
 	
+	//method to find and return the next empty spot in the TLB,
+	//if no empty spots exist then return -1 instead.
 	public static int nextEmptySpotInTLB () {
+		//define counter variable
 		int index = 0;
+		//iterate through the TLB for every TLBEntry 
 		for(TLBEntry x: TLBCache) {
+			//if there is open spot found, return its index
 			if (x == null)
 				return index;
-			index++;
-		} return -1;
-	}
-	
-	public static int inTLB (int pageNumber) {
-		int index = 0;
-		for(TLBEntry x: TLBCache) {
-			if (x.getVPageNum() == pageNumber)
-				return index;
+			//if not empty, increment counter and continue
 			index++;
 		} 
+		//if no empty spots found, return -1
+		return -1;
+	}
+	
+	//method to find out whether an entry with the specified 
+	//page number is currently in the TLB or not, returns -1 if not
+	//or the index if it is found
+	public static int inTLB (int pageNumber) {
+		//define counter variable
+		int index = 0;
+		//iterate through TLB for every TLBEntry
+		for(TLBEntry x: TLBCache) {
+			//if found, return index
+			if (x.getVPageNum() == pageNumber)
+				return index;
+			//increment counter variable
+			index++;
+		} 
+		//if not found, return -1 instead
 		return -1;	
 	}
 	
-	
+	//FIFO method to copy values into one index lower, then clear last index for use
 	public static void fifo(){
 
+		   //define temp array to copy values over into
 	       TLBEntry[] temp = new TLBEntry[16];
 	       
+	       //iterate through TLB and copy values into temp array
 	       for(int i = 0; i < (15); i++){
 	           temp[i] = TLBCache[i+1];
 	       }
 	       
+	       //copy values from temp array back into TLB at one index lower than before
 	       for(int i = 0; i < 16; i++){
 	           TLBCache[i]=temp[i];
 	       }
 	       
+	       //reset the last entry in TLB to make ready for new entry
 	       TLBCache[15]= null;
 	       
 	   }
 	
 	public static void start(String testFilePath) throws FileNotFoundException {
+		//!t the very beginning, iterate through all page table entries
+		//and initialize all page frame numbers to -1.
 		for (int i = 0; i < 256; i++) {
 			VirtualPageTable.pageTable[i] = new PageTableEntry (0,0,0,-1);
 		}
 		
-		// reads the test data with loop checking to see if it is a read or write and does 
-		
+		// reads the test data with loop checking to see if it is a read or write, reacts accordingly
+		//define file and scanner here
 		File readFile = new File(testFilePath);
 		Scanner sc = new Scanner(readFile);
 		
