@@ -8,17 +8,17 @@ import java.util.Scanner;
 public class OperatingSystem {
 
 	private static int pointer = 0;
-	private static PageTableEntry [] VPT = VirtualPageTable.getPageTable();
-	private static TLBEntry [] tlb = CPU.TLBCache;
+	//private static PageTableEntry [] VirtualPageTable.getPageTable() = VirtualPageTable.getPageTable();
+	//private static TLBEntry [] CPU.TLBCache = CPU.TLBCache;
 	
 	// resets the R bit as needed
 	public static void resetRBit() {
 		
-		for(int i = 0; i < VPT.length; i++) {
+		for(int i = 0; i < VirtualPageTable.getPageTable().length; i++) {
 			VirtualPageTable.pageTable[i].setRBit(0);
 		}
 		for(int j = 0; j < CPU.TLBCache.length; j++) {
-			tlb[j].setRBit(0);
+			CPU.TLBCache[j].setRBit(0);
 		}
 	}
 	
@@ -46,11 +46,11 @@ public class OperatingSystem {
 		
 		//if RAM is full replace page
 		if (PhysicalMemory.ram.length == 16) {
-			replace = pageReplacement(replace); 
+			replace = pageReplacement(); 
 			evictedPage = replace[1]; 
 			dirtySet = replace[2]; 
-			VPT[dirtyPageInt].setPageFrameNum(replace[0]);
-			VPT[dirtyPageInt].setDBit(dirtySet);
+			VirtualPageTable.getPageTable()[dirtyPageInt].setPageFrameNum(replace[0]);
+			VirtualPageTable.getPageTable()[dirtyPageInt].setDBit(dirtySet);
 			
             
             if(CPU.inTLB(dirtyPageInt) == 1) {
@@ -70,13 +70,14 @@ public class OperatingSystem {
 		
 		// see if this is what needs to be done
 		 int[] result = {evictedPage, dirtySet};
-	     return result;
+	     return result;   
+	     
 	}
 	
 	
 	
-	// does clock replacment for the page table
-	public static int[] pageReplacement(int [] replace) throws FileNotFoundException {
+	// page table replacement
+	public static int[] pageReplacement() throws FileNotFoundException {
 		int writeIndex = -1;
         int evictedPage = -1;
         int dirtySet = -1;
@@ -88,26 +89,26 @@ public class OperatingSystem {
         while(cycle == true) {
         	//find R bit that is = 0 and reset any other that is not 0
         	//replacement algorithm
-        	if(VPT[pointer].getRBit() == 1) {
-        		VPT[pointer].setRBit(0);
+        	if(VirtualPageTable.getPageTable()[pointer].getRBit() == 1) {
+        		VirtualPageTable.getPageTable()[pointer].setRBit(0);
         		
-        		if(tlb[pointer].getRBit() == 1) {
-        			tlb[pointer].setRBit(0);
+        		if(CPU.TLBCache[pointer].getRBit() == 1) {
+        			CPU.TLBCache[pointer].setRBit(0);
         		}
         	}
         	
-        	if(VPT[pointer].getRBit() == 1 && VPT[pointer].getVBit() == 1) {
+        	if(VirtualPageTable.getPageTable()[pointer].getRBit() == 0 && VirtualPageTable.getPageTable()[pointer].getVBit() == 1) {
         		cycle = false;
         		break;
         	}
-        	if(pointer == VPT.length -1) {
+        	if(pointer == VirtualPageTable.getPageTable().length - 1) {
         		pointer = 0;
-        	}else {
+        	} else {
         		pointer++;
         	}
         }
         
-        if(VPT[pointer].getDBit() == 1) {
+        if(VirtualPageTable.getPageTable()[pointer].getDBit() == 1) {
         	String tmp = Integer.toHexString(pointer);
         	//changes C.pg to 0C.pg
             if(tmp.length() == 1){
@@ -128,19 +129,20 @@ public class OperatingSystem {
         
         evictedPage = pointer;
         writeIndex = VirtualPageTable.getEntry(pointer).getPageFrameNum(); // the open index in RAM
-        VPT[pointer] = new PageTableEntry(0, 0, 0, pointer); // fix this
+        VirtualPageTable.getPageTable()[pointer] = new PageTableEntry(0, 0, 0, -1); // fix this
         
-		if(tlb[pointer] != null) {
-			 String tmp = Integer.toHexString(pointer);
-	            if (tmp.length() == 1) {
-	                tmp = "0" + tmp;
-	            }
-	            int tlbevict = Integer.parseInt(tmp, 16);
-	            tlb[tlbevict] = null;
-	        }
+        for (int i = 0; i < CPU.TLBCache.length; i++) {
+        	
+        	if(CPU.TLBCache[i].getPageFrameNum() == writeIndex ) {
+   			 	
+   	            CPU.TLBCache[i] = null;
+   	            break;
+   	        } 
+        }
+
 		
 		// go to next page table entry
-        if (pointer == VPT.length - 1) {
+        if (pointer == VirtualPageTable.getPageTable().length - 1) {
             pointer = 0;
         } else {
             pointer++;
