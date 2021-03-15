@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 public class OperatingSystem {
 
-	private static int pointer = 0;
+	private static int currentEntry = 0;
 	//private static PageTableEntry [] VirtualPageTable.getPageTable() = VirtualPageTable.getPageTable();
 	//private static TLBEntry [] CPU.TLBCache = CPU.TLBCache;
 	
@@ -30,26 +30,26 @@ public class OperatingSystem {
 		String freshPage = "Project2_test_and_page_files/page_files_Copy/" + hexPageNum + ".pg";
 		int freshPageInt = Integer.parseInt(hexPageNum, 16);
 		int evictedPage = -1;
-	    int dirtySet = -1;
-		int [] replace = new int [3];
+	    int setDirtyVal = -1;
+		int [] values = new int [3];
 			
 		
 		//if RAM is full replace page
 		if (PhysicalMemory.nextEmptySpotInRAM() == -1) {
-			replace = pageReplacement();
+			values = pageReplacement();
 			
 			//write new page to memory
-			PhysicalMemory.store(replace[0], freshPage);
+			PhysicalMemory.store(values[0], freshPage);
 			
-			evictedPage = replace[1]; 
-			dirtySet = replace[2]; 
-			VirtualPageTable.getPageTable()[freshPageInt].setPageFrameNum(replace[0]);
+			evictedPage = values[1]; 
+			setDirtyVal = values[2]; 
+			VirtualPageTable.getPageTable()[freshPageInt].setPageFrameNum(values[0]);
 			VirtualPageTable.getPageTable()[freshPageInt].setVBit(1);
         	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);
 			
             if (CPU.inTLB(freshPageInt) != -1) {
             	
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(values[0]);
             	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
             	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
             	
@@ -66,7 +66,7 @@ public class OperatingSystem {
 			
 			if (CPU.inTLB(freshPageInt) != -1) {
             	
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(replace[0]);
+            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(values[0]);
             	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
             	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
             	
@@ -74,7 +74,7 @@ public class OperatingSystem {
 		}
 		
 		// see if this is what needs to be done
-		 int[] result = {evictedPage, dirtySet};
+		 int[] result = {evictedPage, setDirtyVal};
 	     return result;   
 	     
 	}
@@ -83,62 +83,62 @@ public class OperatingSystem {
 	
 	// page table replacement
 	public static int[] pageReplacement() throws FileNotFoundException {
-		int writeIndex = -1;
-        int evictedPage = -1;
-        int dirtySet = -1;
+		int writeValue = -1;
+        int evictedPageLoc = -1;
+        int dirtyValue = -1;
        
         StringBuilder sb = new StringBuilder(); // new stringbuilder to store output
         
-        boolean cycle = true;
+        boolean clock = true;
         		
-        while(cycle == true) {
+        while(clock == true) {
         	//find R bit that is = 0 and reset any other that is not 0
         	//replacement algorithm
-        	if(VirtualPageTable.getPageTable()[pointer].getRBit() == 1) {
-        		VirtualPageTable.getPageTable()[pointer].setRBit(0);
+        	if(VirtualPageTable.getPageTable()[currentEntry].getRBit() == 1) {
+        		VirtualPageTable.getPageTable()[currentEntry].setRBit(0);
         		
-        		if(CPU.TLBCache[pointer].getRBit() == 1) {
-        			CPU.TLBCache[pointer].setRBit(0);
+        		if(CPU.TLBCache[currentEntry].getRBit() == 1) {
+        			CPU.TLBCache[currentEntry].setRBit(0);
         		}
         	}
         	
-        	if(VirtualPageTable.getPageTable()[pointer].getRBit() == 0 && VirtualPageTable.getPageTable()[pointer].getVBit() == 1) {
-        		cycle = false;
+        	if(VirtualPageTable.getPageTable()[currentEntry].getRBit() == 0 && VirtualPageTable.getPageTable()[currentEntry].getVBit() == 1) {
+        		clock = false;
         		break;
         	}
-        	if(pointer == VirtualPageTable.getPageTable().length - 1) {
-        		pointer = 0;
+        	if(currentEntry == VirtualPageTable.getPageTable().length - 1) {
+        		currentEntry = 0;
         	} else {
-        		pointer++;
+        		currentEntry++;
         	}
         }
         
-        if(VirtualPageTable.getPageTable()[pointer].getDBit() == 1) {
-        	String tmp = Integer.toHexString(pointer);
+        if(VirtualPageTable.getPageTable()[currentEntry].getDBit() == 1) {
+        	String temp = Integer.toHexString(currentEntry);
         	//changes C.pg to 0C.pg
-            if(tmp.length() == 1){
-                tmp = "0" + tmp;
+            if(temp.length() == 1){
+                temp = "0" + temp;
             }
-            PrintWriter pw = new PrintWriter(new File("Project2_test_and_page_files/page_files_Copy/" + tmp + ".pg")); // to overwrite the page file
-            int RAMindex = VirtualPageTable.getEntry(pointer).getPageFrameNum();
-            for(int i=0; i< PhysicalMemory.ram[RAMindex].length;i++){
-                sb.append(PhysicalMemory.ram[RAMindex][i] + "\n");
+            PrintWriter pw = new PrintWriter(new File("Project2_test_and_page_files/page_files_Copy/" + temp + ".pg")); // to overwrite the page file
+            int spotInRAM = VirtualPageTable.getEntry(currentEntry).getPageFrameNum();
+            for(int i=0; i< PhysicalMemory.ram[spotInRAM].length;i++){
+                sb.append(PhysicalMemory.ram[spotInRAM][i] + "\n");
             }
             
             pw.write(sb.toString()); pw.close();
-            dirtySet = 1; // dirty was set  
+            dirtyValue = 1; // dirty was set  
         }
         else{
-            dirtySet = 0; // dirty was not set
+            dirtyValue = 0; // dirty was not set
         }
         
-        evictedPage = pointer;
-        writeIndex = VirtualPageTable.getEntry(pointer).getPageFrameNum(); // the open index in RAM
-        VirtualPageTable.getPageTable()[pointer] = new PageTableEntry(0, 0, 0, -1); // fix this
+        evictedPageLoc = currentEntry;
+        writeValue = VirtualPageTable.getEntry(currentEntry).getPageFrameNum(); // the open index in RAM
+        VirtualPageTable.getPageTable()[currentEntry] = new PageTableEntry(0, 0, 0, -1); // fix this
         
         for (int i = 0; i < CPU.TLBCache.length; i++) {
         	
-        	if(CPU.TLBCache[i].getPageFrameNum() == writeIndex ) {
+        	if(CPU.TLBCache[i].getPageFrameNum() == writeValue ) {
    			 	
    	            CPU.TLBCache[i] = null;
    	            break;
@@ -147,14 +147,14 @@ public class OperatingSystem {
 
 		
 		// go to next page table entry
-        if (pointer == VirtualPageTable.getPageTable().length - 1) {
-            pointer = 0;
+        if (currentEntry == VirtualPageTable.getPageTable().length - 1) {
+            currentEntry = 0;
         } else {
-            pointer++;
+            currentEntry++;
         }
 
-        int[] ret = {writeIndex, evictedPage, dirtySet};
-        return ret;
+        int[] resultValues = {writeValue, evictedPageLoc, dirtyValue};
+        return resultValues;
 	}
 
 }
