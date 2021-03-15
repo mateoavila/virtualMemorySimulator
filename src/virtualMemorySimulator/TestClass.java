@@ -10,7 +10,7 @@ public class TestClass {
 
 	public static void main(String[] args) throws IOException {
 		// make copy of the pages 
-		copyDirectory("Project2_test_and_page_files/page_files", "Project2_test_and_page_files/page_files_Copy");
+		//copyDirectory("Project2_test_and_page_files/page_files", "Project2_test_and_page_files/page_files_Copy");
 		
 		// run other classes with the copy 
 

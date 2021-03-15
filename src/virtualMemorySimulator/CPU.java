@@ -65,6 +65,12 @@ public class CPU {
 		while(sc.hasNextLine()) {
 						
 			int temp1 = Integer.valueOf(sc.nextLine());
+			int soft = 0;
+			int hard = 0;
+			int hit = 0;
+			int valRead = 0;
+			int valToWrite = 0;
+			int[] evictedPageInfo = new int[2];
 			
 			if(temp1 == 0) {
 				//for a read
@@ -80,11 +86,11 @@ public class CPU {
 				
 				//if it is found in TLB and it is marked as active
 				if (inTLB(pageNumber) > -1 && TLBCache[inTLB(pageNumber)].getVBit() == 1) {
-					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
+					valRead = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					VirtualPageTable.getEntry(pageNumber).setRBit(1);
 					TLBCache[inTLB(pageNumber)].setRBit(1);
-					//write val to CSV
 					//record as hit
+					hit = 1;
 				}
 				//check if entry is in the page table next
 				else if (VirtualPageTable.getEntry(pageNumber).getVBit() == 1) {
@@ -93,29 +99,27 @@ public class CPU {
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
 						addTLBEntry(index, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
-						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
 						fifo();
-						addTLBEntry(15, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
-						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						addTLBEntry(15, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum()); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 					}
 					
-					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
-					//write val to csv
+					valRead = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					//record as Soft miss in CSV
+					soft = 1;
 				
 				}
 				
 				//else it is a hard miss, come here
 				else {
 
-					//its not in TLB so it must be added there
+					//its not in TLB or physical memory so it must be added there
 					if ( nextEmptySpotInTLB() > -1 ) {
-						int[] evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
+						evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
 						addTLBEntry(index, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
@@ -124,16 +128,16 @@ public class CPU {
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
-						int[] evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
+						evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
 						fifo();
 						addTLBEntry(15, pageNumber, 1, 1, 0, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
 						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1);
 					}
 					
-					int val = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
-					//write val to csv
+					valRead = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					//record as hard miss in CSV
+					hard = 1;
 				}
 				
 			}
@@ -145,66 +149,73 @@ public class CPU {
 				String nextAddress = sc.nextLine();
 				int intAddress = Integer.parseInt(nextAddress, 16);
 				
-				int valToWrite = Integer.valueOf(sc.nextLine());
+				valToWrite = Integer.valueOf(sc.nextLine());
 				
 				//calculate page info and offset for line number
 				int pageNumber = (int) Math.floor( intAddress / 256 );
 				String pageNumberHex = Integer.toHexString (pageNumber);
 				int lineNumber = intAddress - (pageNumber * 256) ;
 				
-				//if it is found in TLB
-				if (inTLB(pageNumber) > -1) {
-					PhysicalMemory.write(inTLB(pageNumber), lineNumber, valToWrite);
+				//if it is found in TLB and it is marked as active
+				if (inTLB(pageNumber) > -1 && TLBCache[inTLB(pageNumber)].getVBit() == 1) {
+					PhysicalMemory.write(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber, valToWrite);
 					VirtualPageTable.getEntry(pageNumber).setRBit(1);
 					TLBCache[inTLB(pageNumber)].setRBit(1);
 					VirtualPageTable.getEntry(pageNumber).setDBit(1);
 					TLBCache[inTLB(pageNumber)].setDBit(1);
-					//write val to CSV
 					//record as hit
+					hit = 1;
 				}
 				//check if entry is in the page table next
-				else if (VirtualPageTable.getEntry(pageNumber) != null) {
+				else if (VirtualPageTable.getEntry(pageNumber).getVBit() == 1) {
 					//its not in TLB so it must be added there
 					if ( nextEmptySpotInTLB() > -1 ) {
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
-						addTLBEntry(index, pageNumber, 1, 1, 1, index);
-						PhysicalMemory.store(index, "Project2_test_and_page_files/page_files_Copy/" + pageNumberHex + ".pg");
-						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						addTLBEntry(index, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setDBit(1);
-						VirtualPageTable.getEntry(pageNumber).setPageFrameNum(index);
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
-						
+						fifo();
+						addTLBEntry(15, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setDBit(1);
 					}
 					
 					PhysicalMemory.write(inTLB(pageNumber), lineNumber, valToWrite);
-					//write val to csv
 					//record as Soft miss in CSV
+					soft = 1;
 				
 				}
 				
 				//else it is a hard miss, come here
 				else {
 
-					//its not in TLB so it must be added there
+					//its not in TLB or physical memory so it must be added there
 					if ( nextEmptySpotInTLB() > -1 ) {
+						evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
-						addTLBEntry(index, pageNumber, 1, 1, 1, index);
-						PhysicalMemory.store(index, "Project2_test_and_page_files/page_files_Copy/" + pageNumberHex + ".pg");
-						VirtualPageTable.store(new PageTableEntry(1, 1, 1, index), pageNumber);
+						addTLBEntry(index, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setRBit(1);
+						VirtualPageTable.getEntry(pageNumber).setDBit(1);
 						
 					} else if ( nextEmptySpotInTLB() == - 1 ) {
 						//no available spots and one must be overwritten
-						
+						evictedPageInfo = OperatingSystem.writeDirtyPage(pageNumberHex);
+						fifo();
+						addTLBEntry(15, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());
+						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						VirtualPageTable.getEntry(pageNumber).setRBit(1);
+						VirtualPageTable.getEntry(pageNumber).setDBit(1);
 					}
 					
-					PhysicalMemory.write(inTLB(pageNumber), lineNumber, valToWrite);
-					//write val to csv
+					PhysicalMemory.write(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber, valToWrite);
 					//record as hard miss in CSV
+					hard = 1;
 				}
 				
 			
