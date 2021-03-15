@@ -3,6 +3,8 @@ package virtualMemorySimulator;
 //import statements
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class CPU {
@@ -24,7 +26,7 @@ public class CPU {
 		//iterate through the TLB for every TLBEntry 
 		for(TLBEntry x: TLBCache) {
 			//if there is open spot found, return its index
-			if (x == null)
+			if (x.getVBit() == -1)
 				return index;
 			//if not empty, increment counter and continue
 			index++;
@@ -42,8 +44,10 @@ public class CPU {
 		//iterate through TLB for every TLBEntry
 		for(TLBEntry x: TLBCache) {
 			//if found, return index
-			if (x.getVPageNum() == pageNumber)
-				return index;
+			if( x.getVBit() != -1 ) {
+				if (x.getVPageNum() == pageNumber)
+					return index;
+			} 
 			//increment counter variable
 			index++;
 		} 
@@ -68,19 +72,48 @@ public class CPU {
 	       }
 	       
 	       //reset the last entry in TLB to make ready for new entry
-	       TLBCache[15]= null;
+	       TLBCache[15]= new TLBEntry (-1,-1,-1,-1, -1);;
 	       
 	   }
 	
-	public static void start(String testFilePath) throws FileNotFoundException {
-		//!t the very beginning, iterate through all page table entries
-		//and initialize all page frame numbers to -1.
+	public static void start(String testFilePath, String outputFilePath) throws IOException {
+		// At the very beginning, iterate through all page table entries
+		// and initialize all page frame numbers to -1.
 		for (int i = 0; i < 256; i++) {
 			VirtualPageTable.pageTable[i] = new PageTableEntry (0,0,0,-1);
 		}
 		
+		TLBCache = new TLBEntry[16];
+		
+		//initialize all to -1 at the start
+		for (int i = 0; i < TLBCache.length; i++) {
+			
+			TLBCache[i] = new TLBEntry (-1,-1,-1,-1, -1);
+		}
+		
+		//create filewriter for writing to CSV
+		FileWriter csvWriter = new FileWriter(outputFilePath);
+		
+		//append statements for column headers
+		csvWriter.append("Address");
+        csvWriter.append(",");
+        csvWriter.append("r/w");
+        csvWriter.append(",");
+        csvWriter.append("value");
+        csvWriter.append(",");
+        csvWriter.append("soft");
+        csvWriter.append(",");
+        csvWriter.append("hard");
+        csvWriter.append(",");
+        csvWriter.append("hit");
+        csvWriter.append(",");
+        csvWriter.append("evicted_pg#");
+        csvWriter.append(",");
+        csvWriter.append("dirty_evicted_page");
+        csvWriter.append("\n");
+		
 		// reads the test data with loop checking to see if it is a read or write, reacts accordingly
-		//define file and scanner here
+		// define file and scanner here
 		File readFile = new File(testFilePath);
 		Scanner sc = new Scanner(readFile);
 		
@@ -89,6 +122,7 @@ public class CPU {
 		while(sc.hasNextLine()) {
 						
 			int temp1 = Integer.valueOf(sc.nextLine());
+			String nextAddress = "";
 			int soft = 0;
 			int hard = 0;
 			int hit = 0;
@@ -100,15 +134,18 @@ public class CPU {
 				//for a read
 				
 				//read in address here, name variable nextAddress
-				String nextAddress = sc.nextLine();
+				nextAddress = sc.nextLine();
 				int intAddress = Integer.parseInt(nextAddress, 16);
 				
 				//calculate page info and offset for line number
 				int pageNumber = (int) Math.floor( intAddress / 256 );
 				String pageNumberHex = Integer.toHexString (pageNumber);
+				if (pageNumberHex.length() == 1) {
+					pageNumberHex = "0" + pageNumberHex;
+				}
 				int lineNumber = intAddress - (pageNumber * 256);
 				
-				//if it is found in TLB and it is marked as active
+				//if it is found in TLB and it is marked as active (hit)
 				if (inTLB(pageNumber) > -1 && TLBCache[inTLB(pageNumber)].getVBit() == 1) {
 					valRead = PhysicalMemory.read(TLBCache[inTLB(pageNumber)].getPageFrameNum(), lineNumber);
 					VirtualPageTable.getEntry(pageNumber).setRBit(1);
@@ -170,7 +207,7 @@ public class CPU {
 				//for a write
 				
 				//read in address here, name variable nextAddress
-				String nextAddress = sc.nextLine();
+				nextAddress = sc.nextLine();
 				int intAddress = Integer.parseInt(nextAddress, 16);
 				
 				valToWrite = Integer.valueOf(sc.nextLine());
@@ -178,6 +215,9 @@ public class CPU {
 				//calculate page info and offset for line number
 				int pageNumber = (int) Math.floor( intAddress / 256 );
 				String pageNumberHex = Integer.toHexString (pageNumber);
+				if (pageNumberHex.length() == 1) {
+					pageNumberHex = "0" + pageNumberHex;
+				}
 				int lineNumber = intAddress - (pageNumber * 256) ;
 				
 				//if it is found in TLB and it is marked as active
@@ -196,7 +236,7 @@ public class CPU {
 					if ( nextEmptySpotInTLB() > -1 ) {
 						int index = nextEmptySpotInTLB();
 						//write in new TLB entry here
-						addTLBEntry(index, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum());						VirtualPageTable.getEntry(pageNumber).setVBit(1); 
+						addTLBEntry(index, pageNumber, 1, 1, 1, VirtualPageTable.getEntry(pageNumber).getPageFrameNum()); 
 						VirtualPageTable.getEntry(pageNumber).setRBit(1); 
 						VirtualPageTable.getEntry(pageNumber).setDBit(1);
 						
@@ -252,18 +292,46 @@ public class CPU {
 				OperatingSystem.resetRBit();
 			}
 			
+			csvWriter.append(nextAddress);
+	        csvWriter.append(",");
+	        String temptemp = String.valueOf(temp1);
+	        csvWriter.append(temptemp);
+	        csvWriter.append(",");
+	        if ( temp1 == 0 ) {
+	        	String a = String.valueOf(valRead);
+	        	csvWriter.append(a);
+	        } else if ( temp1 == 1 ) {
+	        	String b = String.valueOf(valToWrite);
+	        	csvWriter.append(b);
+	        }
+	        
+	        //make CSV appends, using temptemp as necessary to convert variable types
+	        csvWriter.append(",");
+	        temptemp = String.valueOf(soft);
+	        csvWriter.append(temptemp);
+	        csvWriter.append(",");
+	        temptemp = String.valueOf(hard);
+	        csvWriter.append(temptemp);
+	        csvWriter.append(",");
+	        temptemp = String.valueOf(hit);
+	        csvWriter.append(temptemp);
+	        csvWriter.append(",");
+	        if( evictedPageInfo[0] > -1) {
+	        	temptemp = Integer.toHexString (evictedPageInfo[0]);
+	        	csvWriter.append(temptemp);
+	        } else {
+	        	temptemp = "N/A";
+	        	csvWriter.append(temptemp);
+	        }
+	        csvWriter.append(",");
+	        temptemp = String.valueOf(evictedPageInfo[1]);
+	        csvWriter.append(temptemp);
+	        csvWriter.append("\n");
+			
 		}
 
 		sc.close();
-		
-		// writes to the physical mem
-		
-		//MMU
-			// translates addresses
-			// finds page and line #
-			
-		//TLB
-			// 1D array of 16 entries of TLBEntry object
+		csvWriter.close();
 	}
 
 }

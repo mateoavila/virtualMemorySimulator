@@ -8,11 +8,7 @@ public class PhysicalMemory {
 
 	public static int[][] ram= new int[16][256];
 	public static int counter = 0;
-	/*
-	public PhysicalMemory() {
-		ram = ;
-	}
-	*/
+
 	public static void store(int index, String sourcePath) throws FileNotFoundException {
 		File f = new File(sourcePath);
 		Scanner sc = new Scanner(f);

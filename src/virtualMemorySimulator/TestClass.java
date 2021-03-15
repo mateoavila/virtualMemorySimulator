@@ -1,6 +1,7 @@
 package virtualMemorySimulator;
 
 import java.io.File;
+import java.util.Scanner;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +13,11 @@ public class TestClass {
 		// make copy of the pages 
 		//copyDirectory("Project2_test_and_page_files/page_files", "Project2_test_and_page_files/page_files_Copy");
 		
+		//read input from command line
+		//String inputFile = args[0];
+		
+		//Scanner sc = new Scanner(System.in)
+		CPU.start("Project2_test_and_page_files/test_files/test_1.txt", "C:/Users/Thete/Desktop/test_1.csv");
 		// run other classes with the copy 
 
 	}

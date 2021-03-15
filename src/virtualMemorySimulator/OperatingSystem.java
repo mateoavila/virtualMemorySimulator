@@ -45,16 +45,7 @@ public class OperatingSystem {
 			setDirtyVal = values[2]; 
 			VirtualPageTable.getPageTable()[freshPageInt].setPageFrameNum(values[0]);
 			VirtualPageTable.getPageTable()[freshPageInt].setVBit(1);
-        	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);
-			
-            if (CPU.inTLB(freshPageInt) != -1) {
-            	
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(values[0]);
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
-            	
-            }
-			
+        	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);		
 
         //if not full add to page table and TLB
 		} else {
@@ -64,13 +55,8 @@ public class OperatingSystem {
 			VirtualPageTable.getPageTable()[freshPageInt].setVBit(1);
         	VirtualPageTable.getPageTable()[freshPageInt].setRBit(1);
 			
-			if (CPU.inTLB(freshPageInt) != -1) {
-            	
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setPageFrameNum(values[0]);
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setVBit(1);
-            	CPU.TLBCache[CPU.inTLB(freshPageInt)].setRBit(1);
-            	
-            }
+        	//increment counter in RAM
+        	PhysicalMemory.counter++;
 		}
 		
 		// see if this is what needs to be done
@@ -97,8 +83,9 @@ public class OperatingSystem {
         	if(VirtualPageTable.getPageTable()[currentEntry].getRBit() == 1) {
         		VirtualPageTable.getPageTable()[currentEntry].setRBit(0);
         		
-        		if(CPU.TLBCache[currentEntry].getRBit() == 1) {
-        			CPU.TLBCache[currentEntry].setRBit(0);
+        		int t = CPU.inTLB(currentEntry);
+        		if( t > -1) {
+        			CPU.TLBCache[t].setRBit(0);
         		}
         	}
         	
@@ -134,13 +121,13 @@ public class OperatingSystem {
         
         evictedPageLoc = currentEntry;
         writeValue = VirtualPageTable.getEntry(currentEntry).getPageFrameNum(); // the open index in RAM
-        VirtualPageTable.getPageTable()[currentEntry] = new PageTableEntry(0, 0, 0, -1); // fix this
+        VirtualPageTable.getPageTable()[currentEntry] = new PageTableEntry(0, 0, 0, -1); 
         
         for (int i = 0; i < CPU.TLBCache.length; i++) {
         	
         	if(CPU.TLBCache[i].getPageFrameNum() == writeValue ) {
    			 	
-   	            CPU.TLBCache[i] = null;
+   	            CPU.TLBCache[i] = new TLBEntry (-1,-1,-1,-1, -1);
    	            break;
    	        } 
         }
